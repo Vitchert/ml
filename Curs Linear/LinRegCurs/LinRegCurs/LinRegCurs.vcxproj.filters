@@ -13,32 +13,41 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="LinReg">
+      <UniqueIdentifier>{ec2c1e35-6227-4ddd-8871-339b63069675}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LinReg\Header">
+      <UniqueIdentifier>{5a7cd692-842d-4826-bd92-84ebfe10c73e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LinReg\Source">
+      <UniqueIdentifier>{d853fdcc-9b65-4466-8d88-fa78e9c145d3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Welford.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="LinReg\LDL.cpp">
+      <Filter>LinReg\Source</Filter>
     </ClCompile>
-    <ClCompile Include="LDL.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="LinReg\Welford.cpp">
+      <Filter>LinReg\Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="LinReg\Kahan.h">
+      <Filter>LinReg\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="LinReg\LDL.h">
+      <Filter>LinReg\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="LinReg\LinearModel.h">
+      <Filter>LinReg\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="LinReg\Welford.h">
+      <Filter>LinReg\Header</Filter>
+    </ClInclude>
     <ClInclude Include="Dataset.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Kahan.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LDL.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LinearModel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Welford.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

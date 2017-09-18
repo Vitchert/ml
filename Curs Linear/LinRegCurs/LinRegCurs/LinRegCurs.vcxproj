@@ -88,6 +88,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\Vaman\Documents\Machine Learning\ml\Curs Linear\LinRegCurs\LinRegCurs;C:\Users\Vaman\Documents\Machine Learning\ml\Curs Linear\LinRegCurs\LinRegCurs\LinReg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -142,16 +143,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="LDL.cpp" />
+    <ClCompile Include="LinReg\LDL.cpp" />
+    <ClCompile Include="LinReg\Welford.cpp" />
     <ClCompile Include="Source.cpp" />
-    <ClCompile Include="Welford.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dataset.h" />
-    <ClInclude Include="Kahan.h" />
-    <ClInclude Include="LDL.h" />
-    <ClInclude Include="LinearModel.h" />
-    <ClInclude Include="Welford.h" />
+    <ClInclude Include="LinReg\Kahan.h" />
+    <ClInclude Include="LinReg\LDL.h" />
+    <ClInclude Include="LinReg\LinearModel.h" />
+    <ClInclude Include="LinReg\Welford.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
