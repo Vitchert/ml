@@ -20,24 +20,15 @@ struct TDataset {
 	vector<double> weights;
 	int FeaturesCount;
 
-	map<double,int> classValues;
 
-	vector<vector<size_t>> sortedFeaturesIdxMatrix;
-
-	void sortByFeature() {
-		for (int i = 0; i < FeaturesCount; ++i) {
-			sortedFeaturesIdxMatrix.push_back(ordered(featuresMatrix, i));
-		}
-	}
-
-	template <typename T>
-	std::vector<size_t> ordered(std::vector<T> const& values, int num) {
-		std::vector<size_t> indices(values.size());
+	
+	std::vector<size_t> SortByFeatureIdx(int i) {
+		std::vector<size_t> indices(featuresMatrix.size());
 		std::iota(begin(indices), end(indices), static_cast<size_t>(0));
 
 		std::sort(
 			begin(indices), end(indices),
-			[&](size_t a, size_t b) { return values[a][i] < values[b][i]; }
+			[&](size_t a, size_t b) { return featuresMatrix[a][i] < featuresMatrix[b][i]; }
 		);
 		return indices;
 	}
@@ -52,8 +43,6 @@ struct TDataset {
 		featuresStream >> queryId; //skip query id
 		featuresStream >> feature; //get goal
 		goals.push_back(feature);
-
-		classValues.insert({ feature ,1});
 
 		featuresStream >> url; //skip url
 		featuresStream >> feature; //get weight
@@ -77,12 +66,6 @@ struct TDataset {
 		featuresStream >> queryId; //skip query id
 		featuresStream >> feature; //get goal
 		goals.push_back(feature);
-
-		map<double, int>::iterator  it = classValues.find(feature);
-		if (it != classValues.end())
-			++classValues[feature];
-		else
-			classValues.insert({ feature ,1 });
 
 		featuresStream >> url; //skip url
 		featuresStream >> feature; //get weight
