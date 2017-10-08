@@ -1,13 +1,12 @@
 #pragma once
-
 #include <vector>
-#include "Kahan.h"
 #include <fstream>
 #include <numeric>
-#include "Dataset.h"
 #include <map>
-using namespace std;
+#include <chrono> 
+#include "Dataset.h"
 
+#define EACH_NODE_SHUFFLE
 struct TDecisionTreeNode {
 	int weight = 0;
 	int featureIndex = 0;
@@ -15,22 +14,19 @@ struct TDecisionTreeNode {
 	int classIndex = -1;
 	int leftChildIndex = -1;
 	int rightChildIndex = -1;
-	static TDecisionTreeNode Train() {
-
-	}
 };
 
 struct TDecisionTree {
-	vector<TDecisionTreeNode> tree;
+	std::vector<TDecisionTreeNode> tree;
 	template <typename T>
-	int Prediction(const vector<T>& features) const {
+	int Prediction(const std::vector<T>& features) const {
 		int idx = 0;
 		while (tree[idx].classIndex < 0) {
 			idx = features[tree[idx].featureIndex] < tree[idx].threshold ? tree[idx].leftChildIndex : tree[idx].rightChildIndex;
 		}
 		return tree[idx].classIndex;
 	}
-	void SaveToFile(ofstream& treeOut) {
+	void SaveToFile(std::ofstream& treeOut) {
 		if (tree.size()) {
 			treeOut << tree.size() << " ";
 			for (TDecisionTreeNode node : tree) {
@@ -38,7 +34,7 @@ struct TDecisionTree {
 			}
 		}
 	}
-	static TDecisionTree LoadFromFile(ifstream& treeIn) {
+	static TDecisionTree LoadFromFile(std::ifstream& treeIn) {
 
 		size_t treeSize;
 		treeIn >> treeSize;
@@ -53,33 +49,50 @@ struct TDecisionTree {
 
 		return desicionTree;
 	};
-	static TDecisionTree Train() {
 
-	}
-	vector<double> CalculateSplitpoints(TDataset& dataset, int featureIdx) {
-		int instanceCount = dataset.featuresMatrix.size();
-
-		vector<size_t> sortedIdx = dataset.SortByFeatureIdx(featureIdx);
-		vector<double> splits;
-
-		int i = 1;
-		double lastClass = dataset.goals[sortedIdx[0]];
-		double lastVal = dataset.featuresMatrix[sortedIdx[0]][featureIdx];
-		while (i < instanceCount) {
-			if (dataset.goals[sortedIdx[i]] == lastClass) {
-				lastVal = dataset.featuresMatrix[sortedIdx[i]][featureIdx];
-				++i;
-				continue;
-			}
-
-			splits.push_back((lastVal + dataset.featuresMatrix[sortedIdx[i]][featureIdx]) / 2.);
-			lastVal = dataset.featuresMatrix[sortedIdx[i]][featureIdx];
-			lastClass = dataset.goals[sortedIdx[i]];
+	void ConstructTree(TDataset& dataset, std::vector<char>& dataIdx, std::vector<int> classCount,int dataIdxsize, std::vector<int> fIdx) {
+		TDecisionTreeNode node;
+		TBestSplit split = FindBestSplit(dataset, dataIdx, classCount, dataIdxsize, fIdx);
+		if (split.featureIdx < 0) {
+			node.classIndex = std::max_element(classCount.begin(), classCount.end()) - classCount.begin();
+			tree.push_back(node);
 		}
-		lastVal = (lastVal + dataset.featuresMatrix[sortedIdx[i-1]][featureIdx]) / 2.;
-		if (lastVal != splits.back())
-			splits.push_back(lastVal);
-		return splits;
+		else {
+			int dataPos = 0;
+			int size = dataset.goals.size();
+			std::vector<char>& dataIdxLeft = dataIdx;
+			std::vector<char> dataIdxRight = dataIdx;
+			std::vector<int>& leftClassCount = classCount;
+			std::vector<int> rightClassCount = classCount;
+			int leftDataSize = dataIdxsize;
+			int rightDataSize = dataIdxsize;
+			while (dataPos < size) {
+				while ((dataPos < size) && (dataIdx[dataset.sortedByIdxFeaturesMatrix[split.featureIdx][dataPos]] != 1)) {
+					++dataPos;
+				}
+				if (dataset.featuresMatrix[dataset.sortedByIdxFeaturesMatrix[split.featureIdx][dataPos]][split.featureIdx] < split.splitVal) {
+					dataIdxLeft[dataPos] = 1;
+					dataIdxRight[dataPos] = 0;
+					--rightClassCount[dataset.goals[dataset.sortedByIdxFeaturesMatrix[split.featureIdx][dataPos]]];
+					--rightDataSize;
+				}
+				else {
+					dataIdxLeft[dataPos] = 0;
+					dataIdxRight[dataPos] = 1;
+					--leftClassCount[dataset.goals[dataset.sortedByIdxFeaturesMatrix[split.featureIdx][dataPos]]];
+					--leftDataSize;
+				}
+			}
+			
+			node.featureIndex = split.featureIdx;
+			node.threshold = split.splitVal;
+			tree.push_back(node);
+			int curpos = tree.size() - 1;
+			tree[curpos].leftChildIndex = tree.size();
+			ConstructTree(dataset, dataIdxLeft, leftClassCount, leftDataSize, fIdx);
+			tree[curpos].rightChildIndex = tree.size();
+			ConstructTree(dataset, dataIdxRight, rightClassCount, rightDataSize,  fIdx);
+		}
 	}
 
 	struct TBestSplit {
@@ -87,67 +100,64 @@ struct TDecisionTree {
 		double splitVal;
 	};
 
-	TBestSplit FindBestSplit(TDataset& dataset) {
-		int featureCount = dataset.featuresMatrix[0].size();
+	TBestSplit FindBestSplit(TDataset& dataset, std::vector<char>& dataIdx, std::vector<int>& classCount,int size, std::vector<int>& fIdx) {
+		int nf = sqrt(fIdx.size());
+#ifdef EACH_NODE_SHUFFLE
+		unsigned seed = std::chrono::system_clock::now().time_since_epoch() /
+			std::chrono::milliseconds(1);
+		shuffle(fIdx.begin(), fIdx.end(), std::default_random_engine(seed));
+#endif
 		TBestSplit bestSplit;
 		bestSplit.featureIdx = -1;
+		bestSplit.splitVal = 0;
+
 		double minGini = 1;
-		for (int featureIdx = 0; featureIdx < featureCount; ++featureIdx) {
-			vector<double> splitpoints = CalculateSplitpoints(dataset, featureIdx);			
-			for (double split : splitpoints) {
-				double Gini = CalculateGini(dataset, featureIdx, split);
-				if (Gini < minGini) {
-					minGini = Gini;
-					bestSplit.featureIdx = featureIdx;
-					bestSplit.splitVal = split;
-				}
-			}
-		}
-	}
-	double CalculateGini(TDataset& dataset, int featureIdx, double split) {
-		int instanceCount = dataset.featuresMatrix.size();
-		map<double, int> classCounterLeft;
-		map<double, int>::iterator itLeft;
-		int sizeLeft = 0;
-		map<double, int> classCounterRight;
-		map<double, int>::iterator itRight;
-		int sizeRight = 0;
-		for (int i = 0; i < instanceCount; ++i) {
-			if (dataset.featuresMatrix[i][featureIdx] < split) {
-				itLeft = classCounterLeft.find(dataset.goals[i]);
-				if (itLeft != classCounterLeft.end()) {
-					++classCounterLeft[dataset.goals[i]];
-				}
-				else
-					classCounterLeft.insert({ dataset.goals[i] , 1});
-				++sizeLeft;
-			}
-			else {
-				itRight = classCounterRight.find(dataset.goals[i]);
-				if (itRight != classCounterRight.end()) {
-					++classCounterRight[dataset.goals[i]];
-				}
-				else
-					classCounterRight.insert({ dataset.goals[i] , 1 });
-				++sizeRight;
-			}
-		}
-		double GiniLeft = 1;
-		double GiniRight = 1;
-		if (sizeLeft) {
-			for (itLeft = classCounterLeft.begin(); itLeft != classCounterLeft.end(); itLeft++) {
-				double classProb = itLeft->second / sizeLeft;
-				GiniLeft -= classProb*classProb;
-			}
-		}
-		if (sizeRight) {
-			for (itRight = classCounterRight.begin(); itRight != classCounterRight.end(); itRight++) {
-				double classProb = itRight->second / sizeRight;
-				GiniRight -= classProb*classProb;
-			}
-		}
-		return (GiniLeft + GiniRight) / 2;
-	}
+		int size = dataset.goals.size();
+		int classSize = classCount.size();
 
+		for (int i = 0; i < classSize; ++i) {
+			minGini -= (double)(classCount[i] * classCount[i]) / (classSize*classSize);
 
+			std::vector<int> leftClasses(classSize,0);
+			std::vector<int> rightClasses;
+			for (int fi = 0; fi < nf; ++fi) {
+				int featureIdx = fIdx[fi];
+				std::vector<double> splitpoints = dataset.splitPointsMatrix[featureIdx];
+				int dataPos = 0;
+				int leftsize = 0;
+				int rightsize = size;
+				rightClasses = classCount;
+				std::fill(leftClasses.begin(), leftClasses.end(),0);
+				while (dataIdx[dataset.sortedByIdxFeaturesMatrix[fi][dataPos]] != 1)
+					++dataPos;
+
+				for (double split : splitpoints) {
+					while (dataset.featuresMatrix[dataset.sortedByIdxFeaturesMatrix[fi][dataPos]][fi] < split) {
+						++leftsize;
+						--rightsize;
+						++leftClasses[dataset.goals[dataset.sortedByIdxFeaturesMatrix[fi][dataPos]]];
+						--rightClasses[dataset.goals[dataset.sortedByIdxFeaturesMatrix[fi][dataPos]]];
+						do {
+							++dataPos;
+						} while (dataIdx[dataset.sortedByIdxFeaturesMatrix[fi][dataPos]] != 1);
+					}
+					
+					double leftGini = 1;
+					double rightGini = 1;
+					for (int i = 0; i < classSize; ++i) {
+						leftGini -= (double)(leftClasses[i] * leftClasses[i]) / (leftsize*leftsize);
+						rightGini -= (double)(rightClasses[i] * rightClasses[i]) / (rightsize*rightsize);
+					}
+
+					double Gini = (leftGini + rightGini) / 2.;
+					if (Gini < minGini) {
+						minGini = Gini;
+						bestSplit.featureIdx = featureIdx;
+						bestSplit.splitVal = split;
+					}
+				}
+		}
+		return bestSplit;
+	}
+	
 };
