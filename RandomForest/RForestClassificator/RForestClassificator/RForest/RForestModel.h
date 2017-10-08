@@ -1,24 +1,21 @@
 #pragma once
 
 #include <vector>
-#include "Kahan.h"
 #include <fstream>
 #include <numeric>
 #include <algorithm>
 #include "DecisionTree.h"
 
-using namespace std;
-
 struct TRForestModel{
-	int classesCount;
-	vector<TDecisionTree> forest;	
+	int classesCount = 8;
+	std::vector<TDecisionTree> forest;	
 
 	template <typename T>
-	int Prediction(const vector<T>& features) const {
+	int Prediction(const std::vector<T>& features) const {
 		int prediction = -1;
 		int maxIdx = -1;
 		int max = 0;
-		vector<int> results(classesCount, 0);
+		std::vector<int> results(classesCount, 0);
 
 		for (TDecisionTree tree : forest) {		
 			prediction = tree.Prediction(features);
@@ -29,9 +26,9 @@ struct TRForestModel{
 			}
 		}
 		
-		return maxInd;
+		return maxIdx;
 	}
-	void SaveToFile(const string& modelPath) {
+	void SaveToFile(const std::string& modelPath) {
 		ofstream modelOut(modelPath);
 		modelOut.precision(20);
 
@@ -41,7 +38,7 @@ struct TRForestModel{
 			tree.SaveToFile(modelOut);
 		}
 	}
-	static TRForestModel LoadFromFile(const string& modelPath) {
+	static TRForestModel LoadFromFile(const std::string& modelPath) {
 		ifstream modelIn(modelPath);
 		size_t classCount;
 		size_t forestSize;

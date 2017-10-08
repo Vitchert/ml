@@ -21,21 +21,12 @@
     <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RForest\Welford.cpp">
-      <Filter>Rforest</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dataset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RForest\Kahan.h">
-      <Filter>Rforest</Filter>
-    </ClInclude>
     <ClInclude Include="RForest\RForestModel.h">
-      <Filter>Rforest</Filter>
-    </ClInclude>
-    <ClInclude Include="RForest\Welford.h">
       <Filter>Rforest</Filter>
     </ClInclude>
     <ClInclude Include="DecisionTree.h">
